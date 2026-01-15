@@ -2,6 +2,64 @@
 
 A pipeline for generating region-neutral prompts that elicit regionally diverse responses, designed for training culturally-aware language models.
 
+## Quick Start: Phase 0 (Judge Calibration)
+
+Before running Phase 1, you need to calibrate the judge model on the seed set.
+
+### Step 1: Start the Model Server
+
+In **Terminal 1**, start the vLLM server (keep it running):
+
+```bash
+# Install vLLM if needed
+pip install vllm
+
+# Start server (A100-80GB)
+vllm serve Qwen/Qwen2.5-32B-Instruct --port 8000 --dtype bfloat16
+
+# Or for A100-40GB, use quantized:
+vllm serve Qwen/Qwen2.5-32B-Instruct-AWQ --port 8000
+```
+
+The server will download the model (first time only), load it into GPU memory, and start serving on port 8000. **Leave this terminal running.**
+
+### Step 2: Run Calibration
+
+In **Terminal 2**, run the calibration script:
+
+```bash
+python scripts/run_judge_calibration.py --base-url http://localhost:8000/v1
+```
+
+This will:
+- Grade all 60 seed prompts
+- Compare predictions to gold labels
+- Print accuracy summary
+- Write results to `data/runs/phase0_calibration/judge_results.jsonl`
+- Exit when complete
+
+**Completion signal**: The script prints a summary and exits. You'll see:
+```
+============================================================
+CALIBRATION SUMMARY
+============================================================
+Leakage accuracy:  55/60 (91.7%)
+Salience accuracy: 52/60 (86.7%)
+
+Results written to: data/runs/phase0_calibration/judge_results.jsonl
+```
+
+**Target accuracy**: Leakage ≥85%, Salience ≥75%
+
+### Step 3: Review and Refine (if needed)
+
+If accuracy is below targets:
+1. Review mismatches in `judge_results.jsonl`
+2. Update `prompts/judges/leakage_salience.md` with clarifications
+3. Re-run calibration to verify improvements
+
+---
+
 ## Quick Start: Phase 1
 
 This guide walks you through **Phase 1: MVP Prompt Pool Generation** — creating your first scalable set of region-neutral, region-salient prompts.
