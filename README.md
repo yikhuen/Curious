@@ -12,11 +12,11 @@ In **Terminal 1**, start the vLLM server using the provided startup script. This
 
 ```bash
 # Start server (H100/A100-80GB)
-# We limit max-model-len to 16384 to ensure enough VRAM for KV cache
-bash scripts/start_vllm_server.sh Qwen/Qwen2.5-32B-Instruct 8000 bfloat16 /tmp/vllm.log --max-model-len 16384
+# We limit max-model-len to 8192 to ensure enough VRAM for KV cache
+bash scripts/start_vllm_server.sh Qwen/Qwen2.5-32B-Instruct 8000 bfloat16 /tmp/vllm.log --max-model-len 8192
 
 # Or if you prefer running it manually:
-vllm serve Qwen/Qwen2.5-32B-Instruct --port 8000 --dtype bfloat16 --max-model-len 16384
+vllm serve Qwen/Qwen2.5-32B-Instruct --port 8000 --dtype bfloat16 --max-model-len 8192
 ```
 
 The script will wait for the server to load the model and notify you when it's ready for requests. **Leave this terminal running.**
@@ -93,13 +93,13 @@ You'll need a model server running. For **Qwen2.5-32B-Instruct** on a single 80G
 
 ```bash
 # Recommended: Use the startup script for OOM detection and health checks
-bash scripts/start_vllm_server.sh Qwen/Qwen2.5-32B-Instruct 8000 bfloat16 /tmp/vllm.log --max-model-len 16384
+bash scripts/start_vllm_server.sh Qwen/Qwen2.5-32B-Instruct 8000 bfloat16 /tmp/vllm.log --max-model-len 8192
 
 # Manual start (FP16, uses ~64GB VRAM + KV cache)
-vllm serve Qwen/Qwen2.5-32B-Instruct --port 8000 --dtype bfloat16 --max-model-len 16384
+vllm serve Qwen/Qwen2.5-32B-Instruct --port 8000 --dtype bfloat16 --max-model-len 8192
 ```
 
-Keep this server running in a separate terminal. Note: `max-model-len` is limited to 16384 to ensure the KV cache fits in the remaining VRAM after loading weights.
+Keep this server running in a separate terminal. Note: `max-model-len` is limited to 8192 to ensure the KV cache fits in the remaining VRAM after loading weights.
 
 ---
 
@@ -253,6 +253,66 @@ data/runs/phase1_v1/
 
 ## Troubleshooting
 
+### vLLM Process Management
+
+**Check which model is currently being served:**
+```bash
+curl -s http://localhost:8000/v1/models | python -m json.tool
+```
+
+**Check if vLLM is running:**
+```bash
+pgrep -a vllm
+```
+
+**Kill running vLLM processes:**
+```bash
+pkill -f 'vllm serve'
+```
+
+**Start vLLM with Qwen2.5-32B-Instruct (non-reasoning, recommended for judge):**
+```bash
+# Foreground (see logs directly)
+vllm serve Qwen/Qwen2.5-32B-Instruct --port 8000 --dtype bfloat16 --max-model-len 8192
+
+# Background (logs to file)
+nohup vllm serve Qwen/Qwen2.5-32B-Instruct --port 8000 --dtype bfloat16 --max-model-len 8192 > vllm.log 2>&1 &
+```
+
+**Start vLLM with QwQ-32B (reasoning model, slower, may have parsing issues):**
+```bash
+vllm serve Qwen/QwQ-32B-Preview --port 8000 --dtype bfloat16 --max-model-len 8192
+```
+
+**Monitor vLLM startup logs:**
+```bash
+tail -f vllm.log
+```
+
+### Running Judge Calibration
+
+Once vLLM is serving the model, run calibration:
+
+```bash
+# Activate virtual environment first
+source venv/bin/activate
+
+# Run calibration (uses default profile from configs/llm.yaml)
+python scripts/run_judge_calibration.py --base-url http://localhost:8000/v1
+
+# Or specify a profile explicitly
+python scripts/run_judge_calibration.py --base-url http://localhost:8000/v1 --profile qwen32b
+```
+
+**Expected output:**
+```
+============================================================
+CALIBRATION SUMMARY (qwen32b)
+============================================================
+Leakage accuracy:  XX/53 (XX.X%)
+Salience accuracy: XX/53 (XX.X%)
+```
+
 ### Model Server Not Responding
 
 ```bash
@@ -260,7 +320,8 @@ data/runs/phase1_v1/
 curl http://localhost:8000/v1/models
 
 # Restart if needed
-vllm serve Qwen/Qwen2.5-32B-Instruct --port 8000 --dtype bfloat16
+pkill -f 'vllm serve'
+vllm serve Qwen/Qwen2.5-32B-Instruct --port 8000 --dtype bfloat16 --max-model-len 8192
 ```
 
 ### Out of Memory

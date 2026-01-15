@@ -3,7 +3,7 @@
 ### Status
 
 - [ ] Not started
-- [ ] In progress
+- [x] In progress
 - [ ] Blocked
 - [ ] Done
 
@@ -13,40 +13,40 @@
 
 ### Setup
 
-- [ ] Confirm Phase 0 artifacts exist (configs + judge prompts + seed set)
-- [ ] Decide generator model: Qwen2.5-72B-Instruct vs Qwen3-72B-Instruct (document in `configs/llm.yaml`)
-- [ ] Decide run_id format + output locations (`data/runs/<run_id>/...`)
+- [x] Confirm Phase 0 artifacts exist (configs + judge prompts + seed set)
+- [x] Decide generator model: Qwen2.5-72B-Instruct vs Qwen3-72B-Instruct (document in `configs/llm.yaml`)
+- [x] Decide run_id format + output locations (`data/runs/<run_id>/...`)
 
 ### Generation templates
 
-- [ ] Create `prompts/generation/question_gen_<type>.md` for each question_type
-- [ ] Include contrastive examples (good vs leaky) drawn from seed negatives
-- [ ] Require strict JSON output (parseable)
+- [x] Create `prompts/generation/question_gen_<type>.md` for each question_type
+- [x] Include contrastive examples (good vs leaky) drawn from seed negatives
+- [x] Require strict JSON output (parseable)
 
 ### Generation run (coverage-first)
 
-- [ ] Generate initial small batch per (domain×type) (10–30 prompts)
-- [ ] Save `questions_raw.jsonl` + generator provenance
+- [x] Generate initial small batch per (domain×type) (10–30 prompts) — script ready: `phase1_generate_questions.py`
+- [x] Save `questions_raw.jsonl` + generator provenance
 - [ ] Review top failure modes (leakage patterns, repetitive prompts)
 
 ### Hard filters
 
-- [ ] Implement explicit leakage blocklist filtering
-- [ ] Implement shape checks (is-question, length bounds, language)
-- [ ] Implement PII heuristics
-- [ ] Save `questions_filtered.jsonl` + filter reasons
+- [x] Implement explicit leakage blocklist filtering
+- [x] Implement shape checks (is-question, length bounds, language)
+- [x] Implement PII heuristics
+- [x] Save `questions_filtered.jsonl` + filter reasons — script ready: `phase1_filter_questions.py`
 
 ### Dedup / novelty
 
-- [ ] Implement ROUGE-L novelty gate (Self-Instruct-style threshold ≈0.7)
-- [ ] Save `questions_deduped.jsonl` + novelty scores
+- [x] Implement ROUGE-L novelty gate (Self-Instruct-style threshold ≈0.7) — script ready: `phase1_dedup_questions.py`
+- [x] Save `questions_deduped.jsonl` + novelty scores
 - [ ] Decide if semantic dedup is needed (only add if ROUGE-L insufficient)
 
 ### Judge scoring (leakage + salience)
 
-- [ ] Run judge to add leakage_score + salience_score + rationale
-- [ ] Gate: accept leakage=0 and salience≥1
-- [ ] Save `questions_scored.jsonl` and `questions_accepted.jsonl`
+- [x] Run judge to add leakage_score + salience_score + rationale — script ready: `phase1_score_questions.py`
+- [x] Gate: accept leakage=0 and salience≥1
+- [x] Save `questions_scored.jsonl` and `questions_accepted.jsonl`
 
 ### Audit loop (small but required)
 
@@ -57,8 +57,8 @@
 
 ### Reporting / reproducibility
 
-- [ ] Write `run_manifest.json` (models, decoding params, template versions, counts)
-- [ ] Produce a simple distribution report (domain×type counts, acceptance rates)
+- [x] Write `run_manifest.json` (models, decoding params, template versions, counts)
+- [x] Produce a simple distribution report (domain×type counts, acceptance rates) — script ready: `phase1_report.py`
 - [ ] Promote latest accepted set to `data/questions.jsonl` (or document the canonical path)
 
 ---

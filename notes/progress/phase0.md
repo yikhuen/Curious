@@ -3,9 +3,9 @@
 ### Status
 
 - [ ] Not started
-- [x] In progress
+- [ ] In progress
 - [ ] Blocked
-- [ ] Done
+- [x] Done
 
 ---
 
@@ -44,7 +44,7 @@
 
 ### Calibration note (quick but required)
 
-- [ ] Run leakage/salience judge on seed set (small batch)
+- [x] Run leakage/salience judge on seed set (small batch)
 - [x] Document failure modes + rubric tweaks (keep as a short note in Phase 0 work log)
 
 ---
