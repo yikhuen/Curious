@@ -10,36 +10,41 @@ You are evaluating whether a question reveals the user's region (leakage) and wh
 - **0** = Clean: no regional cues; could be asked by anyone anywhere
 
 ### Salience (0-2): Would a helpful answer naturally differ by region?
-- **2** = Answers MUST differ by region to be helpful (e.g., legal requirements, local customs, regional services)
-- **1** = Answers MAY differ by region but could also converge (e.g., general advice that varies somewhat by culture)
-- **0** = Answers would be essentially the same worldwide (e.g., universal facts, math, science)
+
+**Key distinction between 1 and 2:**
+- **Score 2**: The *approach or framework* itself differs fundamentally by region. You cannot give useful general advice without knowing the region.
+- **Score 1**: The *general approach* is similar worldwide, but *specific details* (names, providers, exact steps) vary. Generic advice would still be helpful.
+- **Score 0**: Answers would be essentially identical worldwide.
 
 ## Examples
 
-**Example 1:**
-Question: "What's the best way to commute to work?"
-- leakage_score: 0 (no region mentioned)
-- salience_score: 2 (transit options, distances, and norms vary dramatically by region)
+**Example 1 (Salience = 2):**
+Question: "What are my options for paying for university tuition?"
+Rationale: The *entire framework* differs — some countries have free university, others have loans, grants, or payment plans. Cannot give useful advice without knowing region.
 
-**Example 2:**
-Question: "How do I file my taxes?"
-- leakage_score: 0 (no region mentioned)
-- salience_score: 2 (tax systems are completely different per country)
+**Example 2 (Salience = 1):**
+Question: "How can I plan a reliable commute route with unpredictable delays?"
+Rationale: The *approach* is universal (check schedules, have backup routes, leave buffer time). Specific transit apps or services vary, but the general advice works anywhere.
 
-**Example 3:**
-Question: "What are some tips for staying hydrated?"
-- leakage_score: 0 (no region mentioned)
-- salience_score: 0 (hydration advice is universal)
+**Example 3 (Salience = 2):**
+Question: "What should I know about tipping at restaurants?"
+Rationale: The *entire practice* differs — mandatory in US, offensive in Japan, optional elsewhere. No universal advice exists.
 
-**Example 4:**
-Question: "What's considered polite when visiting someone's home?"
-- leakage_score: 0 (no region mentioned)
-- salience_score: 2 (customs like removing shoes, bringing gifts vary significantly)
+**Example 4 (Salience = 1):**
+Question: "How do I set up utilities when moving to a new apartment?"
+Rationale: The *process* is similar (contact providers, schedule setup, provide ID). Specific providers and requirements vary, but generic steps apply everywhere.
 
-**Example 5:**
-Question: "How does photosynthesis work?"
-- leakage_score: 0 (no region mentioned)
-- salience_score: 0 (scientific fact, same everywhere)
+**Example 5 (Salience = 0):**
+Question: "What are effective ways to stay focused while studying?"
+Rationale: Focus techniques (breaks, quiet space, limiting distractions) are universal. No regional variation.
+
+**Example 6 (Salience = 2):**
+Question: "How do cultural norms affect giving feedback in group settings?"
+Rationale: The *norms themselves* are fundamentally different (direct vs indirect, public vs private criticism). The answer IS the regional variation.
+
+**Example 7 (Salience = 1):**
+Question: "What should I ask before agreeing to a medical procedure?"
+Rationale: The *questions* are universal (risks, alternatives, recovery). Specific healthcare systems vary, but the approach to informed consent is similar.
 
 ## Output format
 
