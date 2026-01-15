@@ -8,20 +8,18 @@ Before running Phase 1, you need to calibrate the judge model on the seed set.
 
 ### Step 1: Start the Model Server
 
-In **Terminal 1**, start the vLLM server (keep it running):
+In **Terminal 1**, start the vLLM server using the provided startup script. This script automatically detects OOM errors and verifies when the server is ready:
 
 ```bash
-# Install vLLM if needed
-pip install vllm
+# Start server (H100/A100-80GB)
+# We limit max-model-len to 16384 to ensure enough VRAM for KV cache
+bash scripts/start_vllm_server.sh Qwen/Qwen2.5-32B-Instruct 8000 bfloat16 /tmp/vllm.log --max-model-len 16384
 
-# Start server (A100-80GB)
-vllm serve Qwen/Qwen2.5-32B-Instruct --port 8000 --dtype bfloat16
-
-# Or for A100-40GB, use quantized:
-vllm serve Qwen/Qwen2.5-32B-Instruct-AWQ --port 8000
+# Or if you prefer running it manually:
+vllm serve Qwen/Qwen2.5-32B-Instruct --port 8000 --dtype bfloat16 --max-model-len 16384
 ```
 
-The server will download the model (first time only), load it into GPU memory, and start serving on port 8000. **Leave this terminal running.**
+The script will wait for the server to load the model and notify you when it's ready for requests. **Leave this terminal running.**
 
 ### Step 2: Run Calibration
 
@@ -89,22 +87,19 @@ Additional dependencies for Phase 1:
 pip install rouge-score  # For ROUGE-L deduplication
 ```
 
-### 3. GPU Setup (A100 recommended)
+### 3. GPU Setup (H100/A100 recommended)
 
-You'll need a model server running. For **Qwen2.5-32B-Instruct** on a single A100:
+You'll need a model server running. For **Qwen2.5-32B-Instruct** on a single 80GB GPU:
 
 ```bash
-# Install vLLM
-pip install vllm
+# Recommended: Use the startup script for OOM detection and health checks
+bash scripts/start_vllm_server.sh Qwen/Qwen2.5-32B-Instruct 8000 bfloat16 /tmp/vllm.log --max-model-len 16384
 
-# Start the server (FP16, uses ~64GB VRAM)
-vllm serve Qwen/Qwen2.5-32B-Instruct --port 8000 --dtype bfloat16
-
-# Or for A100-40GB, use quantized:
-vllm serve Qwen/Qwen2.5-32B-Instruct-AWQ --port 8000
+# Manual start (FP16, uses ~64GB VRAM + KV cache)
+vllm serve Qwen/Qwen2.5-32B-Instruct --port 8000 --dtype bfloat16 --max-model-len 16384
 ```
 
-Keep this server running in a separate terminal.
+Keep this server running in a separate terminal. Note: `max-model-len` is limited to 16384 to ensure the KV cache fits in the remaining VRAM after loading weights.
 
 ---
 
