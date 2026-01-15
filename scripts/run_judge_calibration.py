@@ -32,9 +32,10 @@ def load_judge_prompt():
         return f.read()
 
 
-def load_seed_set():
+def load_seed_set(seed_file: str = None):
     seeds = []
-    with open(ROOT / "data" / "seeds" / "questions_gold.jsonl") as f:
+    seed_path = Path(seed_file) if seed_file else ROOT / "data" / "seeds" / "questions_gold.jsonl"
+    with open(seed_path) as f:
         for line in f:
             if line.strip():
                 seeds.append(json.loads(line))
@@ -108,11 +109,16 @@ def main():
         default=str(ROOT / "data" / "runs" / "phase0_calibration" / "judge_results.jsonl"),
         help="Output file path",
     )
+    parser.add_argument(
+        "--seed-file",
+        default=None,
+        help="Path to seed file (default: data/seeds/questions_gold.jsonl)",
+    )
     args = parser.parse_args()
 
     config = load_config()
     judge_template = load_judge_prompt()
-    seeds = load_seed_set()
+    seeds = load_seed_set(args.seed_file)
 
     if args.limit:
         seeds = seeds[: args.limit]
