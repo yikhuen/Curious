@@ -1,0 +1,38 @@
+version: 1
+domains:
+  - id: transport_commuting
+    name: Transport and commuting
+    description: Daily travel choices, transit usage, and commuting routines.
+  - id: housing_utilities
+    name: Housing and utilities
+    description: Renting, repairs, and basic household services and bills.
+  - id: healthcare_decisions
+    name: Healthcare decisions
+    description: Accessing care, choosing providers, and navigating treatment choices.
+  - id: education_pathways
+    name: Education pathways
+    description: School options, training routes, and learning support decisions.
+  - id: workplace_norms
+    name: Workplace norms
+    description: Communication, expectations, and collaboration practices at work.
+  - id: personal_finance_basics
+    name: Personal finance basics
+    description: Budgeting, payments, and everyday money management.
+  - id: food_dining
+    name: Food and dining
+    description: Eating at home or out, ordering, and shared meals.
+  - id: shopping_returns
+    name: Shopping and returns
+    description: Purchasing decisions, warranties, and return processes.
+  - id: etiquette_social_norms
+    name: Etiquette and social norms
+    description: Greetings, invitations, and interpersonal expectations.
+  - id: family_childcare
+    name: Family and childcare
+    description: Caregiving, household roles, and family support planning.
+  - id: leisure_recreation
+    name: Leisure and recreation
+    description: Free time, hobbies, and community activities.
+  - id: civic_public_services
+    name: Civic and public services
+    description: Accessing local services, documents, and public information.

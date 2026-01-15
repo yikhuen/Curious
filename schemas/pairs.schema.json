@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PairwisePreferenceRecord",
+  "type": "object",
+  "required": [
+    "prompt",
+    "chosen",
+    "rejected",
+    "pair_meta"
+  ],
+  "properties": {
+    "prompt": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Prompt text."
+    },
+    "chosen": {
+      "type": "string",
+      "description": "Preferred completion."
+    },
+    "rejected": {
+      "type": "string",
+      "description": "Non-preferred completion."
+    },
+    "pair_meta": {
+      "type": "object",
+      "description": "Policy ids, model ids, decoding params, label source, axis."
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "QuestionRecord",
+  "type": "object",
+  "required": [
+    "id",
+    "question",
+    "domain",
+    "question_type",
+    "source",
+    "leakage_score",
+    "salience_score",
+    "filters",
+    "provenance"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique record identifier."
+    },
+    "question": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Prompt text."
+    },
+    "domain": {
+      "type": "string",
+      "description": "Domain bucket id."
+    },
+    "question_type": {
+      "type": "string",
+      "description": "Question type id."
+    },
+    "source": {
+      "type": "string",
+      "description": "seed, llm_generate, llm_evolve, or external_seed."
+    },
+    "leakage_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2
+    },
+    "salience_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 2
+    },
+    "filters": {
+      "type": "object",
+      "description": "Filter booleans and notes."
+    },
+    "provenance": {
+      "type": "object",
+      "description": "Model, template version, timestamp, run id."
+    }
+  },
+  "additionalProperties": true
+}

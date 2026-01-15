@@ -1,0 +1,27 @@
+version: 1
+interface: openai_compatible
+prompt_template_version: v1
+
+generator:
+  model_id: Qwen2.5-32B-Instruct
+  decoding_params:
+    temperature: 0.7
+    top_p: 0.9
+    max_tokens: 512
+    presence_penalty: 0.0
+    frequency_penalty: 0.0
+
+judge:
+  model_id: Qwen2.5-32B-Instruct
+  decoding_params:
+    temperature: 0.2
+    top_p: 0.9
+    max_tokens: 512
+
+cache:
+  enabled: true
+  key_fields:
+    - prompt_template_version
+    - model_id
+    - decoding_params
+    - input_hash

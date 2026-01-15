@@ -1,0 +1,29 @@
+version: 1
+question_types:
+  - id: explanatory
+    description: Explain factors, concepts, or norms.
+    prompt_hint: Explain the main considerations or reasons.
+  - id: comparative
+    description: Compare options, pros, and cons.
+    prompt_hint: Compare two or more choices and their trade-offs.
+  - id: advisory
+    description: Offer guidance on what someone should do.
+    prompt_hint: Provide practical advice for a situation.
+  - id: procedural
+    description: Describe steps or a process.
+    prompt_hint: Outline a clear sequence of steps.
+  - id: hypothetical
+    description: Respond to a scenario or what-if situation.
+    prompt_hint: Address a specific scenario and recommended actions.
+  - id: reflective
+    description: Explore preferences or considerations.
+    prompt_hint: Discuss how someone might think about the choice.
+  - id: tradeoff
+    description: Evaluate explicit trade-offs between options.
+    prompt_hint: Identify what is gained and lost across options.
+
+budgets:
+  default_per_domain_type: 30
+  per_type_overrides:
+    reflective: 20
+    tradeoff: 20
