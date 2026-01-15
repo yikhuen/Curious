@@ -16,7 +16,7 @@ echo "Log file: $LOG_FILE"
 echo ""
 
 # Start vLLM in background and capture PID
-vllm serve "$MODEL" --port "$PORT" --dtype "$DTYPE" > "$LOG_FILE" 2>&1 &
+vllm serve "$MODEL" --port "$PORT" --dtype "$DTYPE" "${@:5}" > "$LOG_FILE" 2>&1 &
 VLLM_PID=$!
 
 echo "vLLM started with PID: $VLLM_PID"
