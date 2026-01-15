@@ -135,97 +135,84 @@ Each template should:
 - Show contrastive examples (good vs leaky from seed negatives)
 - Require strict JSON output
 
-**Status**: ⚠️ Templates not yet created — this is the first task.
+**Status**: ✅ Templates created in `prompts/generation/`.
 
 ### Step 2: Generate Initial Batch
 
-Run generation for each (domain × question_type) bucket:
+Run generation for each (domain × question_type) bucket. Each bucket will request a specific number of questions from the LLM.
 
 ```bash
 python scripts/phase1_generate_questions.py \
     --run-id phase1_v1 \
     --base-url http://localhost:8000/v1 \
-    --batch-size 20
+    --num 20
 ```
 
 **Output**: `data/runs/phase1_v1/questions_raw.jsonl`
 
-**What to check**:
-- Coverage across domains/types
-- Early leakage patterns
-- Repetitive prompts
+**Note**: `--num` overrides the default budget per bucket (usually 30).
 
 ### Step 3: Apply Hard Filters
 
-Run cheap filters (blocklists, shape checks, PII):
+Run cheap filters (blocklists, shape checks, PII). This script automatically finds the raw questions in your run directory.
 
 ```bash
-python scripts/phase1_filter_questions.py \
-    --input data/runs/phase1_v1/questions_raw.jsonl \
-    --output data/runs/phase1_v1/questions_filtered.jsonl
+python scripts/phase1_filter_questions.py --run-id phase1_v1
 ```
 
 **Output**: `questions_filtered.jsonl` with filter reasons
 
-**Filters applied**:
-- Explicit leakage blocklist (countries, institutions, currencies)
-- Shape checks (is-question, length bounds, language)
-- PII heuristics
-
 ### Step 4: Deduplicate
 
-Remove near-duplicates using ROUGE-L:
+Remove near-duplicates using ROUGE-L. This step also compares against the gold seeds to avoid duplicates of your hand-curated set.
 
 ```bash
-python scripts/phase1_dedup_questions.py \
-    --input data/runs/phase1_v1/questions_filtered.jsonl \
-    --output data/runs/phase1_v1/questions_deduped.jsonl \
-    --rouge-threshold 0.7
+python scripts/phase1_dedup_questions.py --run-id phase1_v1 --include-seeds
 ```
 
 **Output**: `questions_deduped.jsonl` with novelty scores
 
 **Threshold**: ROUGE-L similarity ≥ 0.7 → reject (Self-Instruct standard)
 
-### Step 5: Score with Judge
+### Step 5: Score with Judge (and Accept)
 
-Run leakage/salience scoring:
+Run leakage/salience scoring. This script will also create the final `questions_accepted.jsonl` file based on the scores (leakage=0 and salience≥1).
 
 ```bash
 python scripts/phase1_score_questions.py \
-    --input data/runs/phase1_v1/questions_deduped.jsonl \
-    --output data/runs/phase1_v1/questions_scored.jsonl \
+    --run-id phase1_v1 \
     --base-url http://localhost:8000/v1
 ```
 
-**Output**: `questions_scored.jsonl` with `leakage_score`, `salience_score`, `rationale`
+**Output**: 
+- `questions_scored.jsonl`: All questions with scores and rationales.
+- `questions_accepted.jsonl`: The final gated prompt pool.
 
-**Gate**: Accept if `leakage_score == 0` AND `salience_score >= 1`
-
-### Step 6: Generate Final Accepted Set
-
-```bash
-python scripts/phase1_accept_questions.py \
-    --input data/runs/phase1_v1/questions_scored.jsonl \
-    --output data/runs/phase1_v1/questions_accepted.jsonl
-```
-
-**Output**: `questions_accepted.jsonl` (final prompt pool)
-
-### Step 7: Audit & Report
+### Step 6: Audit & Report
 
 Sample and audit quality:
 
 ```bash
-python scripts/phase1_report.py \
-    --run-dir data/runs/phase1_v1 \
-    --audit-sample-size 100
+python scripts/phase1_report.py --run-id phase1_v1
 ```
 
 **Output**: 
 - `run_manifest.json` (config + counts)
 - Distribution report (domain×type coverage)
 - Audit samples for manual review
+- `phase1_report.json` (machine-readable stats)
+
+---
+
+## Full Pipeline Orchestration
+
+If you want to run all steps (Filter, Dedup, Score, Report) in one command:
+
+```bash
+python scripts/phase1_run_pipeline.py --run-id phase1_v1 --base-url http://localhost:8000/v1
+```
+
+Use `--skip-generate` if you have already run the generation step.
 
 ---
 
@@ -355,14 +342,12 @@ After Phase 1 is complete:
 
 ## Script Status
 
-⚠️ **Phase 1 scripts not yet implemented**. The scripts referenced above need to be created:
-
-- [ ] `scripts/phase1_generate_questions.py`
-- [ ] `scripts/phase1_filter_questions.py`
-- [ ] `scripts/phase1_dedup_questions.py`
-- [ ] `scripts/phase1_score_questions.py`
-- [ ] `scripts/phase1_accept_questions.py`
-- [ ] `scripts/phase1_report.py`
+- [x] `scripts/phase1_generate_questions.py`
+- [x] `scripts/phase1_filter_questions.py`
+- [x] `scripts/phase1_dedup_questions.py`
+- [x] `scripts/phase1_score_questions.py`
+- [x] `scripts/phase1_report.py`
+- [x] `scripts/phase1_run_pipeline.py`
 
 See `notes/implementation/phase1.md` for detailed implementation plan.
 
