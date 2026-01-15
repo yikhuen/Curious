@@ -14,13 +14,13 @@ profiles:
     generator:
       temperature: 0.7
       top_p: 0.9
-      max_tokens: 512
+      max_tokens: 2048
       presence_penalty: 0.0
       frequency_penalty: 0.0
     judge:
       temperature: 0.2
       top_p: 0.9
-      max_tokens: 512
+      max_tokens: 1024
 
   qwq32b:
     name: "QwQ-32B-Preview (Reasoning)"
