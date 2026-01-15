@@ -4,6 +4,7 @@ Run leakage/salience judge on the seed set for calibration.
 
 Usage:
     python scripts/run_judge_calibration.py --base-url http://localhost:8000/v1
+    python scripts/run_judge_calibration.py --base-url http://localhost:8000/v1 --profile qwq32b
 
 Requires:
     pip install openai pyyaml
@@ -27,6 +28,19 @@ def load_config():
         return yaml.safe_load(f)
 
 
+def get_profile(config: dict, profile_name: str = None) -> dict:
+    """Get model profile from config."""
+    if profile_name is None:
+        profile_name = config.get("default_profile", "qwen32b")
+    
+    profiles = config.get("profiles", {})
+    if profile_name not in profiles:
+        available = list(profiles.keys())
+        raise ValueError(f"Profile '{profile_name}' not found. Available: {available}")
+    
+    return profiles[profile_name]
+
+
 def load_judge_prompt():
     with open(ROOT / "prompts" / "judges" / "leakage_salience.md") as f:
         return f.read()
@@ -46,8 +60,23 @@ def render_prompt(template: str, question: str) -> str:
     return template.replace("{{question}}", question)
 
 
-def parse_json_response(text: str) -> dict | None:
-    """Extract JSON from response, handling markdown code blocks."""
+def parse_json_response(text: str, is_reasoning_model: bool = False) -> dict | None:
+    """Extract JSON from response, handling markdown code blocks and reasoning chains."""
+    
+    # For reasoning models, the JSON is usually at the end after thinking
+    # Try to find the last JSON object in the response
+    if is_reasoning_model:
+        # Find all JSON-like objects in the text
+        json_pattern = r'\{[^{}]*"leakage_score"[^{}]*"salience_score"[^{}]*\}'
+        matches = re.findall(json_pattern, text, re.DOTALL)
+        if matches:
+            # Try the last match first (most likely to be the final answer)
+            for match in reversed(matches):
+                try:
+                    return json.loads(match)
+                except json.JSONDecodeError:
+                    continue
+    
     # Try direct parse
     try:
         return json.loads(text)
@@ -62,7 +91,15 @@ def parse_json_response(text: str) -> dict | None:
         except json.JSONDecodeError:
             pass
 
-    # Try finding any JSON object
+    # Try finding any JSON object with our expected keys
+    match = re.search(r'\{[^{}]*"leakage_score"[^{}]*\}', text, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group(0))
+        except json.JSONDecodeError:
+            pass
+    
+    # Fallback: try finding any JSON object
     match = re.search(r"\{[^{}]*\}", text)
     if match:
         try:
@@ -73,7 +110,7 @@ def parse_json_response(text: str) -> dict | None:
     return None
 
 
-def run_judge(client: OpenAI, model_id: str, decoding_params: dict, prompt: str) -> dict:
+def run_judge(client: OpenAI, model_id: str, decoding_params: dict, prompt: str, is_reasoning_model: bool = False) -> dict:
     response = client.chat.completions.create(
         model=model_id,
         messages=[{"role": "user", "content": prompt}],
@@ -82,7 +119,7 @@ def run_judge(client: OpenAI, model_id: str, decoding_params: dict, prompt: str)
         max_tokens=decoding_params.get("max_tokens", 512),
     )
     raw = response.choices[0].message.content
-    parsed = parse_json_response(raw)
+    parsed = parse_json_response(raw, is_reasoning_model=is_reasoning_model)
     return {"raw": raw, "parsed": parsed}
 
 
@@ -99,6 +136,11 @@ def main():
         help="API key (use 'not-needed' for local vLLM)",
     )
     parser.add_argument(
+        "--profile",
+        default=None,
+        help="Model profile to use (e.g., qwen32b, qwq32b). Default from config.",
+    )
+    parser.add_argument(
         "--limit",
         type=int,
         default=None,
@@ -106,8 +148,8 @@ def main():
     )
     parser.add_argument(
         "--output",
-        default=str(ROOT / "data" / "runs" / "phase0_calibration" / "judge_results.jsonl"),
-        help="Output file path",
+        default=None,
+        help="Output file path (default: auto-generated based on profile)",
     )
     parser.add_argument(
         "--seed-file",
@@ -117,18 +159,33 @@ def main():
     args = parser.parse_args()
 
     config = load_config()
+    profile = get_profile(config, args.profile)
     judge_template = load_judge_prompt()
     seeds = load_seed_set(args.seed_file)
 
     if args.limit:
         seeds = seeds[: args.limit]
 
-    client = OpenAI(base_url=args.base_url, api_key=args.api_key)
-    model_id = config["judge"]["model_id"]
-    decoding_params = config["judge"]["decoding_params"]
+    # Get profile settings
+    model_id = profile["model_id"]
+    decoding_params = profile.get("judge", {})
+    is_reasoning_model = profile.get("is_reasoning_model", False)
+    profile_name = args.profile or config.get("default_profile", "qwen32b")
 
-    print(f"Running judge on {len(seeds)} seeds using {model_id}")
+    # Set output path
+    if args.output:
+        output_path = Path(args.output)
+    else:
+        output_path = ROOT / "data" / "runs" / "phase0_calibration" / f"judge_results_{profile_name}.jsonl"
+
+    client = OpenAI(base_url=args.base_url, api_key=args.api_key)
+
+    print(f"Running judge on {len(seeds)} seeds")
+    print(f"Profile: {profile_name} ({profile.get('name', model_id)})")
+    print(f"Model: {model_id}")
+    print(f"Reasoning model: {is_reasoning_model}")
     print(f"Base URL: {args.base_url}")
+    print(f"Max tokens: {decoding_params.get('max_tokens', 512)}")
     print()
 
     results = []
@@ -138,7 +195,7 @@ def main():
     for i, seed in enumerate(seeds):
         prompt = render_prompt(judge_template, seed["question"])
         try:
-            response = run_judge(client, model_id, decoding_params, prompt)
+            response = run_judge(client, model_id, decoding_params, prompt, is_reasoning_model=is_reasoning_model)
         except Exception as e:
             print(f"[{i+1}/{len(seeds)}] ERROR: {seed['id']} - {e}")
             results.append({"seed_id": seed["id"], "error": str(e)})
@@ -176,6 +233,7 @@ def main():
                 "rationale": parsed.get("rationale"),
                 "leakage_match": leak_match,
                 "salience_match": sal_match,
+                "profile": profile_name,
             })
         else:
             print(f"[{i+1}/{len(seeds)}] PARSE_FAIL: {seed['id']} - {response['raw'][:100]}")
@@ -184,12 +242,13 @@ def main():
                 "question": seed["question"],
                 "parse_error": True,
                 "raw_response": response["raw"],
+                "profile": profile_name,
             })
 
     # Summary
     print()
     print("=" * 60)
-    print("CALIBRATION SUMMARY")
+    print(f"CALIBRATION SUMMARY ({profile_name})")
     print("=" * 60)
     if total > 0:
         print(f"Leakage accuracy:  {correct['leakage']}/{total} ({100*correct['leakage']/total:.1f}%)")
@@ -198,7 +257,6 @@ def main():
         print("No successful evaluations.")
 
     # Write results
-    output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w") as f:
         for r in results:

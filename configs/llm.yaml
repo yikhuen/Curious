@@ -2,21 +2,40 @@ version: 1
 interface: openai_compatible
 prompt_template_version: v1
 
-generator:
-  model_id: Qwen/Qwen2.5-32B-Instruct
-  decoding_params:
-    temperature: 0.7
-    top_p: 0.9
-    max_tokens: 512
-    presence_penalty: 0.0
-    frequency_penalty: 0.0
+# Default profile to use
+default_profile: qwen32b
 
-judge:
-  model_id: Qwen/Qwen2.5-32B-Instruct
-  decoding_params:
-    temperature: 0.2
-    top_p: 0.9
-    max_tokens: 512
+# Model profiles
+profiles:
+  qwen32b:
+    name: "Qwen2.5-32B-Instruct"
+    model_id: Qwen/Qwen2.5-32B-Instruct
+    is_reasoning_model: false
+    generator:
+      temperature: 0.7
+      top_p: 0.9
+      max_tokens: 512
+      presence_penalty: 0.0
+      frequency_penalty: 0.0
+    judge:
+      temperature: 0.2
+      top_p: 0.9
+      max_tokens: 512
+
+  qwq32b:
+    name: "QwQ-32B-Preview (Reasoning)"
+    model_id: Qwen/QwQ-32B-Preview
+    is_reasoning_model: true
+    generator:
+      temperature: 0.7
+      top_p: 0.9
+      max_tokens: 2048  # Higher for reasoning chains
+      presence_penalty: 0.0
+      frequency_penalty: 0.0
+    judge:
+      temperature: 0.6  # Slightly higher for reasoning exploration
+      top_p: 0.9
+      max_tokens: 2048  # Higher for reasoning chains
 
 cache:
   enabled: true
